@@ -64,6 +64,7 @@ type Config struct {
 	Cmd          []string
 	Dns          []string
 	Image        string // Name of the image as it was passed by the operator (eg. could be symbolic)
+	Volumes      map[string]struct{}
 }
 
 func ParseRun(args []string, stdout io.Writer) (*Config, error) {
@@ -94,6 +95,9 @@ func ParseRun(args []string, stdout io.Writer) (*Config, error) {
 
 	var flDns ListOpts
 	cmd.Var(&flDns, "dns", "Set custom dns servers")
+
+	flVolumes := NewPathOpts()
+	cmd.Var(flVolumes, "v", "Attach a data volume")
 
 	if err := cmd.Parse(args); err != nil {
 		return nil, err
@@ -134,6 +138,7 @@ func ParseRun(args []string, stdout io.Writer) (*Config, error) {
 		Cmd:          runCmd,
 		Dns:          flDns,
 		Image:        image,
+		Volumes:      flVolumes,
 	}
 	// When allocating stdin in attached mode, close stdin at client disconnect
 	if config.OpenStdin && config.AttachStdin {
