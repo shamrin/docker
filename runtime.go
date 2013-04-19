@@ -176,12 +176,6 @@ func (runtime *Runtime) Register(container *Container) error {
 		}
 	}
 
-	// If the container is not running or just has been flagged not running
-	// then close the wait lock chan (will be reset upon start)
-	if !container.State.Running {
-		close(container.waitLock)
-	}
-
 	// Even if not running, we init the lock (prevents races in start/stop/kill)
 	container.State.initLock()
 
@@ -199,6 +193,15 @@ func (runtime *Runtime) Register(container *Container) error {
 	// done
 	runtime.containers.PushBack(container)
 	runtime.idIndex.Add(container.Id)
+
+	// If the container is not running or just has been flagged not running
+	// then close the wait lock chan (will be reset upon start)
+	if !container.State.Running {
+		close(container.waitLock)
+	} else {
+		container.allocateNetwork()
+		go container.monitor()
+	}
 	return nil
 }
 
